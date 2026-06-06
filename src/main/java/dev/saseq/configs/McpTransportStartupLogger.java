@@ -21,6 +21,9 @@ public class McpTransportStartupLogger implements ApplicationRunner {
     @Value("${spring.ai.mcp.server.streamable-http.mcp-endpoint:/mcp}")
     private String mcpEndpoint;
 
+    @Value("${spring.ai.mcp.server.sse-endpoint:/sse}")
+    private String sseEndpoint;
+
     @Override
     public void run(ApplicationArguments args) {
         if (stdioEnabled) {
@@ -29,5 +32,6 @@ public class McpTransportStartupLogger implements ApplicationRunner {
         }
 
         log.info("MCP transport: HTTP streamable endpoint available at http://localhost:{}{}", serverPort, mcpEndpoint);
+        log.info("MCP transport: legacy SSE endpoint available at http://localhost:{}{}", serverPort, sseEndpoint);
     }
 }

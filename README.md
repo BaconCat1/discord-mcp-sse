@@ -56,7 +56,9 @@ docker run -d -i \
   saseq/discord-mcp:latest
 ```
 
-Default MCP endpoint URL (HTTP profile): `http://localhost:8085/mcp`
+MCP endpoints (HTTP profile):
+- Streamable HTTP URL: `http://localhost:8085/mcp`
+- SSE URL: `http://localhost:8085/sse`
 
 <details>
     <summary style="font-size: 1.35em; font-weight: bold;">
@@ -97,7 +99,9 @@ curl -fsS http://localhost:8085/actuator/health
 > You do not need to set `LOGGING_PATTERN_CONSOLE` manually.
 > Logging is configured automatically for both `http` and legacy `stdio` modes.
 
-Default MCP endpoint URL (HTTP profile): `http://localhost:8085/mcp`
+MCP endpoints (HTTP profile):
+- Streamable HTTP URL: `http://localhost:8085/mcp`
+- SSE URL: `http://localhost:8085/sse`
 
 Health endpoint (Actuator): `http://localhost:8085/actuator/health`
 
@@ -134,11 +138,60 @@ java -jar /absolute/path/to/discord-mcp-1.0.0.jar
 
 > NOTE: The `DISCORD_GUILD_ID` environment variable is optional. When provided, it sets a default Discord server ID so any tool that accepts a `guildId` parameter can omit it.
 
-Default MCP endpoint URL (HTTP profile): `http://localhost:8085/mcp`
+MCP endpoints (HTTP profile):
+- Streamable HTTP URL: `http://localhost:8085/mcp`
+- SSE URL: `http://localhost:8085/sse`
 
 </details>
 
 ## 🔗 Connections
+
+### ► MCP HTTP Endpoints
+
+When `SPRING_PROFILES_ACTIVE=http` is enabled, one server process exposes both MCP HTTP transports:
+
+- Streamable HTTP URL: `http://localhost:8085/mcp`
+- Legacy SSE URL: `http://localhost:8085/sse`
+
+Use `/mcp` for clients that support Streamable HTTP. Use `/sse` for legacy MCP SSE clients, including clients whose integration UI expects an MCP Server URL such as `https://example.com/sse`.
+
+For Docker:
+
+```bash
+docker run -d -i \
+  --name discord-mcp \
+  --restart unless-stopped \
+  -p 8085:8085 \
+  -e SPRING_PROFILES_ACTIVE=http \
+  -e DISCORD_TOKEN=<YOUR_DISCORD_BOT_TOKEN> \
+  -e DISCORD_GUILD_ID=<OPTIONAL_DEFAULT_SERVER_ID> \
+  saseq/discord-mcp:latest
+```
+
+For Docker Compose, set these values in `.env` and run `docker compose up -d --build`:
+
+```bash
+SPRING_PROFILES_ACTIVE=http
+DISCORD_TOKEN=<YOUR_DISCORD_BOT_TOKEN>
+DISCORD_GUILD_ID=<OPTIONAL_DEFAULT_SERVER_ID>
+```
+
+Reverse proxy notes for `/sse`:
+- Disable proxy buffering for SSE responses.
+- Use a long read timeout, for example 1 hour or more.
+- Keep the connection HTTP/1.1 compatible and pass through the `Connection` header normally.
+
+Example Nginx location:
+
+```nginx
+location /sse {
+    proxy_pass http://discord-mcp:8085;
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_read_timeout 1h;
+}
+```
 
 ### ► 🗞️ Default config.json Connection
 

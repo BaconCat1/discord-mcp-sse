@@ -21,6 +21,8 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -62,6 +64,8 @@ public class DiscordMcpConfig {
     }
 
     @Bean
+    @ConditionalOnMissingBean(JDA.class)
+    @ConditionalOnProperty(prefix = "discord.jda", name = "enabled", havingValue = "true", matchIfMissing = true)
     public JDA jda(@Value("${DISCORD_TOKEN:}") String token) throws InterruptedException {
         if (token == null || token.isEmpty()) {
             System.err.println("ERROR: The environment variable DISCORD_TOKEN is not set. Please set it to run the application properly.");
