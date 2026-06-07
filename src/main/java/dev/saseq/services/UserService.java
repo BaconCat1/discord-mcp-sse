@@ -61,6 +61,8 @@ public class UserService {
             name = username.substring(0, idx);
             discriminatorLocal = username.substring(idx + 1);
         }
+
+        // Try cache first
         List<Member> members = guild.getMemberCache().getElementsByUsername(name, true);
         if (discriminatorLocal != null) {
             final String finalDiscriminator = discriminatorLocal;
@@ -68,6 +70,27 @@ public class UserService {
                     .filter(m -> m.getUser().getDiscriminator().equals(finalDiscriminator))
                     .toList();
         }
+
+        // Fallback to API if not in cache
+        if (members.isEmpty()) {
+            try {
+                members = guild.retrieveMembersByPrefix(name, 10).get();
+                if (discriminatorLocal != null) {
+                    final String finalDiscriminator = discriminatorLocal;
+                    members = members.stream()
+                            .filter(m -> m.getUser().getDiscriminator().equals(finalDiscriminator))
+                            .toList();
+                } else {
+                    final String finalName = name;
+                    members = members.stream()
+                            .filter(m -> m.getUser().getName().equalsIgnoreCase(finalName))
+                            .toList();
+                }
+            } catch (Exception e) {
+                // Fallback failed
+            }
+        }
+
         if (members.isEmpty()) {
             throw new IllegalArgumentException("No user found with username " + username);
         }
